@@ -38,4 +38,4 @@ client.on("error", (err) => {
   console.error(err)
 })
 
-client.login('');
+client.login(process.env.DISCORD_TOKEN);
