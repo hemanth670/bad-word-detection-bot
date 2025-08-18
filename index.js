@@ -1,7 +1,7 @@
-
-// const Discord = require('discord.js');
-// const client = new Discord.Client();
+// const { Client, GatewayIntentBits, Events } = require('discord.js');
 // const express = require('express');
+// require('dotenv').config(); // load .env
+
 // const app = express();
 // const port = 3000;
 
@@ -12,114 +12,116 @@
 // app.listen(port, () => {
 //   console.log(`Server listening on port ${port}`);
 // });
-// let badWords = require("./list-bad-word.json")
-// let msgs = require("./list-msg.json")
 
+// // Load bad words and replies
+// let badWords = require("./list-bad-word.json");
+// let msgs = require("./list-msg.json");
 
-// client.on('ready', () => {
-//   console.log(`Logged in as ${client.user.tag}!`);
+// // Create client with intents
+// const client = new Client({
+//   intents: [
+//     //GatewayIntentBits.Guilds,
+//     //GatewayIntentBits.GuildMessages,
+//     GatewayIntentBits.MessageContent
+//   ]
 // });
 
-// client.on('message', msg => {
+// // Bot ready
+// client.once(Events.ClientReady, () => {
+//   console.log(`✅ Logged in as ${client.user.tag}`);
+// });
+
+// // Message event (new syntax)
+// client.on(Events.MessageCreate, (msg) => {
 //   try {
-//     let chatClient = msg.content.toLocaleLowerCase()
-//     chatClient = chatClient.split(' ')
-//     for (let index = 0; index < chatClient.length; index++) {
-//       const element = chatClient[index];
+//     if (msg.author.bot) return; // ignore other bots
 
-//       if (badWords.id.includes(element)) {
-//         msg.reply(msgs.id[Math.floor(Math.random() * msgs.id.length)])
+//     let chatClient = msg.content.toLowerCase().split(' ');
+
+//     for (let word of chatClient) {
+//       if (badWords.id.includes(word)) {
+//         msg.reply(msgs.id[Math.floor(Math.random() * msgs.id.length)]);
 //         break;
 //       }
 
-//       if (badWords.en.includes(element.toLocaleLowerCase())) {
-//         msg.reply(msgs.en[Math.floor(Math.random() * msgs.en.length)])
+//       if (badWords.en.includes(word)) {
+//         msg.reply(msgs.en[Math.floor(Math.random() * msgs.en.length)]);
 //         break;
 //       }
-
 //     }
 
-
 //   } catch (err) {
-//     msg.channel.send("aku error om. msg : " + err)
+//     msg.channel.send("⚠️ Error: " + err.message);
 //   }
-
 // });
 
+// // Error handler
 // client.on("error", (err) => {
-//   console.error(err)
-// })
+//   console.error(err);
+// });
 
+// // Login
 // client.login(process.env.DISCORD_TOKEN);
-// For loading the secret token from the environment
-require('dotenv').config(); 
-
-// For creating a web server to keep the bot online 24/7
+// index.js
+require('dotenv').config(); // Load .env
+const { Client, GatewayIntentBits, Events } = require('discord.js');
 const express = require('express');
+
+// ------------------- Express server to keep bot online -------------------
 const app = express();
 const port = 3000;
 
 app.get('/', (req, res) => {
-  res.send('Bot is online!');
+  res.send('Bot is running!');
 });
 
 app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
 });
 
+// ------------------- Load bad words and replies -------------------
+const badWords = require("./list-bad-word.json");
+const msgs = require("./list-msg.json");
 
-// --- Your Original Bot Code Starts Here ---
-
-const Discord = require('discord.js');
-// It's good practice to specify intents for newer discord.js versions
-const client = new Discord.Client(); 
-let badWords = require("./list-bad-word.json");
-let msgs = require("./list-msg.json");
-
-
-// Event handler for when the bot is ready
-client.on('ready', () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+// ------------------- Create Discord client -------------------
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
+// ------------------- Bot ready event -------------------
+client.once(Events.ClientReady, () => {
+  console.log(`✅ Logged in as ${client.user.tag}`);
+});
 
-// Event handler for new messages
-client.on('message', msg => {
-  // Ignore messages from other bots to prevent loops
-  if (msg.author.bot) return;
+// ------------------- Message handler -------------------
+client.on(Events.MessageCreate, (msg) => {
+  if (msg.author.bot) return; // Ignore bot messages
 
-  try {
-    const chatContent = msg.content.toLowerCase();
-    const words = chatContent.split(' ');
+  const words = msg.content.toLowerCase().split(/\s+/); // split by spaces
 
-    for (const element of words) {
-      // Check for Indonesian bad words
-      if (badWords.id.includes(element)) {
-        msg.reply(msgs.id[Math.floor(Math.random() * msgs.id.length)]);
-        return; // Exit after finding one bad word
-      }
-
-      // Check for English bad words
-      if (badWords.en.includes(element)) {
-        msg.reply(msgs.en[Math.floor(Math.random() * msgs.en.length)]);
-        return; // Exit after finding one bad word
-      }
+  for (const word of words) {
+    // Check Indonesian bad words
+    if (badWords.id.includes(word)) {
+      msg.reply(msgs.id[Math.floor(Math.random() * msgs.id.length)]);
+      break;
     }
-  } catch (err) {
-    // Log errors privately instead of sending them to the channel
-    console.error("An error occurred while processing a message:", err);
+
+    // Check English bad words
+    if (badWords.en.includes(word)) {
+      msg.reply(msgs.en[Math.floor(Math.random() * msgs.en.length)]);
+      break;
+    }
   }
 });
 
-
-// Event handler for client errors
+// ------------------- Error logging -------------------
 client.on("error", (err) => {
-  console.error("Discord Client Error:", err);
+  console.error("Discord client error:", err);
 });
 
-
-// Login to Discord using the token from your environment variables
+// ------------------- Login with token -------------------
 client.login(process.env.DISCORD_TOKEN);
-
-
-
